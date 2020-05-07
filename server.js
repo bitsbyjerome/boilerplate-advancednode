@@ -10,11 +10,13 @@ app.use("/public", express.static(process.cwd() + "/public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.set('view engine', 'pug');
+
 app.route("/").get((req, res) => {
   //Change the response to render the Pug template
-  res.send(`Pug template is not defined.`);
+    res.render("pug/index");
 });
 
 app.listen(process.env.PORT || 3000, () => {
-  console.log("Listening on port " + process.env.PORT);
+  console.log("Listening on port " + 3000);
 });
