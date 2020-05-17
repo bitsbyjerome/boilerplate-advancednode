@@ -30,15 +30,16 @@ app.use(session(
 app.use(passport.initialize());
 app.use(passport.session());
 
-mongo.connect(process.env.DATABASE, {useUnifiedTopology:true}, (err, db)=>{
+mongo.connect(process.env.DATABASE, {useUnifiedTopology:true}, (err, dbClient)=>{
     if(err){
         console.log('Database error: '+ err);
     }else{
-        console.log('Database connection successful')
+        console.log('Database connection successful');
+        let db = dbClient.db('test');
         passport.use(new localStrategy(
             (username, password, done)=>{
                 db.collection('users').findOne({username:username}, (dbErr, user)=>{
-                    console.log('User '+username+ 'attempted to login');
+                    console.log('User '+ username + 'attempted to login');
                     if(dbErr){return done(dbErr)}
                     if(!user){return done(null, false)}
                     if(password!== user.password){return done(null, false)}
@@ -60,6 +61,7 @@ mongo.connect(process.env.DATABASE, {useUnifiedTopology:true}, (err, db)=>{
         app.listen(process.env.PORT || 3000, () => {
             console.log("Listening on port " + 3000);
         });
+
     }
 
 });
@@ -68,7 +70,11 @@ mongo.connect(process.env.DATABASE, {useUnifiedTopology:true}, (err, db)=>{
 
 app.set('view engine', 'pug');
 
+app.post('/login', passport.authenticate('local', {successRedirect:'/profile', failureRedirect:'/'}), function(req, res){
+
+});
+
 app.route("/").get((req, res) => {
   //Change the response to render the Pug template
-    res.render("pug/index", {title:'Hello', message:'Please login'});
+    res.render("pug/index", {title:'Hello', message:'Please login', showLogin:true});
 });
