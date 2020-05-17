@@ -74,6 +74,16 @@ mongo.connect(process.env.DATABASE, {useUnifiedTopology:true}, (err, dbClient)=>
 
         });
 
+        app.get('/logout', function (req, res) {
+            res.redirect('/')
+        })
+
+        // app.route("/logout").get(
+        //     (req, res)=>{
+        //         //req.logout()
+        //         res.redirect('/')
+        //     });
+
         app.listen(process.env.PORT || 3000, () => {
             console.log("Listening on port " + 3000);
         });
@@ -103,4 +113,13 @@ app.route("/").get((req, res) => {
         showLogin:true,
 
     });
+
 });
+
+// app.use(
+//     (req, res, next)=>{
+//         res.status(404)
+//             .type('text')
+//             .send('Not Found');
+//     }
+// )
