@@ -7,6 +7,7 @@ const passport = require('passport');
 const session = require('express-session');
 const ObjectID = require('mongodb').ObjectID;
 const mongo = require('mongodb').MongoClient;
+const localStrategy = require('passport-local');
 
 
 
@@ -34,6 +35,17 @@ mongo.connect(process.env.DATABASE, {useUnifiedTopology:true}, (err, db)=>{
         console.log('Database error: '+ err);
     }else{
         console.log('Database connection successful')
+        passport.use(new localStrategy(
+            (username, password, done)=>{
+                db.collection('users').findOne({username:username}, (dbErr, user)=>{
+                    console.log('User '+username+ 'attempted to login');
+                    if(dbErr){return done(dbErr)}
+                    if(!user){return done(null, false)}
+                    if(password!== user.password){return done(null, false)}
+                    return done(null, user)
+                })
+            }
+        ))
         passport.serializeUser((user, done) => {
             done(null, user._id);
         });
@@ -53,12 +65,6 @@ mongo.connect(process.env.DATABASE, {useUnifiedTopology:true}, (err, db)=>{
 });
 
 
-
-// passport.deserializeUser(
-//     (id, done)=>{
-//         done(null, null)
-//     }
-// );
 
 app.set('view engine', 'pug');
 
