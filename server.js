@@ -10,8 +10,6 @@ const mongo = require('mongodb').MongoClient;
 const localStrategy = require('passport-local');
 
 
-
-
 const app = express();
 
 fccTesting(app); //For FCC testing purposes
@@ -65,7 +63,9 @@ mongo.connect(process.env.DATABASE, {useUnifiedTopology:true}, (err, dbClient)=>
         app.route("/profile")
             .get(ensureAuthenticated, (req, res)=>{
 
-                res.render('pug/profile')
+                res.render('pug/profile', {
+                    username: req.user.username
+                })
             });
 
         app.post('/login', passport.authenticate(
@@ -98,5 +98,9 @@ function ensureAuthenticated(req, res, next){
 
 app.route("/").get((req, res) => {
     //Change the response to render the Pug template
-    res.render("pug/index", {title:'Home Page ', message:'Please login', showLogin:true});
+    res.render("pug/index", {title:'Home Page ',
+        message:'Please login',
+        showLogin:true,
+
+    });
 });
