@@ -30,6 +30,8 @@ app.use(session(
 app.use(passport.initialize());
 app.use(passport.session());
 
+
+
 mongo.connect(process.env.DATABASE, {useUnifiedTopology:true}, (err, dbClient)=>{
     if(err){
         console.log('Database error: '+ err);
@@ -58,6 +60,9 @@ mongo.connect(process.env.DATABASE, {useUnifiedTopology:true}, (err, dbClient)=>
                 }
             );
         });
+
+
+
         app.listen(process.env.PORT || 3000, () => {
             console.log("Listening on port " + 3000);
         });
@@ -73,8 +78,24 @@ app.set('view engine', 'pug');
 app.post('/login', passport.authenticate('local', {successRedirect:'/profile', failureRedirect:'/'}), function(req, res){
 
 });
+function ensureAuthenticated(req, res, next){
+
+    if(req.isAuthenticated()){
+        return next();
+    }
+    //res.status(307).end();
+    return res.status(302).redirect("/")
+
+}
 
 app.route("/").get((req, res) => {
-  //Change the response to render the Pug template
-    res.render("pug/index", {title:'Hello', message:'Please login', showLogin:true});
+    //Change the response to render the Pug template
+    res.render("pug/index", {title:'Home Page ', message:'Please login', showLogin:true});
 });
+
+
+app.route("/profile")
+    .get(ensureAuthenticated, (req, res)=>{
+
+        res.render('pug/profile')
+    })
