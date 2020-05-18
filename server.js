@@ -8,6 +8,7 @@ const session = require('express-session');
 const ObjectID = require('mongodb').ObjectID;
 const mongo = require('mongodb').MongoClient;
 const localStrategy = require('passport-local');
+const bcrypt = require('bcrypt');
 
 
 const app = express();
@@ -42,7 +43,7 @@ mongo.connect(process.env.DATABASE, {useUnifiedTopology:true}, (err, dbClient)=>
                     console.log('User '+ username + 'attempted to login');
                     if(dbErr){return done(dbErr)}
                     if(!user){return done(null, false)}
-                    if(password!== user.password){return done(null, false)}
+                    if(!bcrypt.compareSync( password, user.password)){return done(null, false)}
                     return done(null, user)
                 })
             }
@@ -68,25 +69,54 @@ mongo.connect(process.env.DATABASE, {useUnifiedTopology:true}, (err, dbClient)=>
                 })
             });
 
-        app.post('/login', passport.authenticate(
-            'local',
+        app.post('/login', passport.authenticate('local',
             {successRedirect:'/profile', failureRedirect:'/'}), function(req, res){
 
         });
 
-        app.get('/logout', function (req, res) {
+        app.route('/logout').get(function (req, res) {
+            req.logout();
             res.redirect('/')
         })
 
-        // app.route("/logout").get(
-        //     (req, res)=>{
-        //         //req.logout()
-        //         res.redirect('/')
-        //     });
 
         app.listen(process.env.PORT || 3000, () => {
             console.log("Listening on port " + 3000);
         });
+
+
+        app.route('/register').post(
+            (req, res, next)=>{
+                // check if user existed already
+                db.collection('users').findOne(
+                    {username:req.body.username},
+                    function(err, data){
+                        if(err){
+                            next(err)
+                        }else if(data){
+                            res.redirect('/')
+                        }else{
+                            //hash the pwd before saving
+                            const hashPassword = bcrypt.hashSync(req.body.password, 12)
+                            //insert data into db
+                            db.collection('users').insertOne({
+                                username:req.body.username,
+                                password:hashPassword
+                            }, (insertError, insertResult)=>{
+                                if(insertError){
+                                    res.redirect('/')
+                                }else{
+                                    next(null, data)
+                                }
+                            })
+                        }
+                    }
+                )
+            },
+            passport.authenticate('local', {failureRedirect:'/'}),(req, res, next)=>{
+                res.redirect('/profile')
+            }
+        )
 
     }
 
@@ -111,10 +141,13 @@ app.route("/").get((req, res) => {
     res.render("pug/index", {title:'Home Page ',
         message:'Please login',
         showLogin:true,
+        showRegistration: true
 
     });
 
 });
+
+
 
 // app.use(
 //     (req, res, next)=>{
